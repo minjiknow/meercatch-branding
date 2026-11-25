@@ -11,7 +11,6 @@ jQuery(function ($) {
     initQuickNav();
     initValueSlider();
 
-
     // 기존 contents-wrap / cards / card 구조를 그대로 사용하는 모바일 배너입니다.
     function initValueSlider() {
         const container = document.querySelector(".mobile-silde .contents-wrap");
@@ -57,10 +56,15 @@ jQuery(function ($) {
             const caption = captions[slider.activeIndex];
             caption.style.opacity = "1";
             if (!reducedMotion.matches) {
-                animations.push(caption.animate(
-                    [{ opacity: 0, transform: "translateY(48px)" }, { opacity: 1, transform: "translateY(0)" }],
-                    { delay: 100, duration: 700, easing: "cubic-bezier(0.22, 1, 0.36, 1)", fill: "backwards" },
-                ));
+                animations.push(
+                    caption.animate(
+                        [
+                            { opacity: 0, transform: "translateY(48px)" },
+                            { opacity: 1, transform: "translateY(0)" },
+                        ],
+                        { delay: 100, duration: 700, easing: "cubic-bezier(0.22, 1, 0.36, 1)", fill: "backwards" },
+                    ),
+                );
             }
         }
 
@@ -102,7 +106,9 @@ jQuery(function ($) {
                 cards.style.scrollSnapType = "none";
                 buttons.style.display = "flex";
                 slider.init();
-                controls.forEach((button) => { button.hidden = false; });
+                controls.forEach((button) => {
+                    button.hidden = false;
+                });
                 updatePlayback();
                 revealCaption();
             } else if (!mobile.matches && slider) {
@@ -111,7 +117,9 @@ jQuery(function ($) {
                 buttons.style.removeProperty("display");
                 cards.style.removeProperty("overflow");
                 cards.style.removeProperty("scroll-snap-type");
-                controls.forEach((button) => { button.hidden = true; });
+                controls.forEach((button) => {
+                    button.hidden = true;
+                });
                 updatePlaybackButton();
                 animations.forEach((animation) => animation.cancel());
                 animations = [];
@@ -123,32 +131,46 @@ jQuery(function ($) {
             window.ScrollTrigger?.refresh();
         }
 
-        new IntersectionObserver(([entry]) => {
-            visible = entry.isIntersecting && entry.intersectionRatio >= 0.5;
-            if (slider) {
-                if (visible && !slider.animating) revealCaption();
-                else hideCaptions();
-            }
-            updatePlayback();
-        }, { threshold: 0.5 }).observe(container);
-        controls.forEach((button) => button.addEventListener("click", () => {
-            if (!slider) return;
-            if (button.classList.contains("previous")) slider.slidePrev();
-            if (button.classList.contains("next")) slider.slideNext();
-            if (button.classList.contains("autoplay")) {
-                userPaused = slider.autoplay.running;
+        new IntersectionObserver(
+            ([entry]) => {
+                visible = entry.isIntersecting && entry.intersectionRatio >= 0.5;
+                if (slider) {
+                    if (visible && !slider.animating) revealCaption();
+                    else hideCaptions();
+                }
                 updatePlayback();
-            }
-        }));
+            },
+            { threshold: 0.5 },
+        ).observe(container);
+        controls.forEach((button) =>
+            button.addEventListener("click", () => {
+                if (!slider) return;
+                if (button.classList.contains("previous")) slider.slidePrev();
+                if (button.classList.contains("next")) slider.slideNext();
+                if (button.classList.contains("autoplay")) {
+                    userPaused = slider.autoplay.running;
+                    updatePlayback();
+                }
+            }),
+        );
         document.addEventListener("visibilitychange", updatePlayback);
         container.addEventListener("keydown", (event) => {
             if (!slider || event.target !== container) return;
-            if (event.key === "ArrowRight") { event.preventDefault(); slider.slideNext(); }
-            if (event.key === "ArrowLeft") { event.preventDefault(); slider.slidePrev(); }
+            if (event.key === "ArrowRight") {
+                event.preventDefault();
+                slider.slideNext();
+            }
+            if (event.key === "ArrowLeft") {
+                event.preventDefault();
+                slider.slidePrev();
+            }
         });
         reducedMotion.addEventListener("change", () => {
             userPaused = reducedMotion.matches;
-            if (slider) { slider.params.speed = reducedMotion.matches ? 0 : 450; revealCaption(); }
+            if (slider) {
+                slider.params.speed = reducedMotion.matches ? 0 : 450;
+                revealCaption();
+            }
             updatePlayback();
         });
         mobile.addEventListener("change", updateSlider);
@@ -184,41 +206,114 @@ jQuery(function ($) {
             ScrollTrigger.addEventListener("refreshInit", updateCopyLayout);
 
             const timeline = gsap.timeline({
-                defaults: { duration: 2, ease: "none" },
-                scrollTrigger: {
-                    trigger: $pin.get(0),
-                    pin: true,
-                    // 확대가 스크롤보다 늦게 끝나며 제목이 먼저 올라가지 않도록 동기화합니다.
-                    scrub: true,
-                    start: () => `top ${$header.outerHeight() ?? 0}px`,
-                    end: "+=200%",
-                    invalidateOnRefresh: true,
-                },
+                paused: true,
+                defaults: { duration: 0.35, ease: "none" },
             });
-            timeline
-                .fromTo($imageFrame, { clipPath: "inset(60% 4% 0% 4% round 24px 24px 0px 0px)" }, { clipPath: "inset(20% 15% 20% 15% round 24px 24px 24px 24px)" }, "key")
-                .fromTo($image, { scale: 1.1 }, { scale: 1 }, "key")
-                .fromTo(
-                    $imageFrame,
-                    { clipPath: "inset(20% 15% 20% 15% round 24px 24px 24px 24px)" },
-                    {
-                        clipPath: "inset(0% 0% 0% 0% round 0px 0px 0px 0px)",
-                        immediateRender: false,
-                    },
-                    "key2",
-                )
-                .addLabel("expanded")
-                // 완성된 이미지와 제목을 보여준 뒤 스크롤 고정을 해제합니다.
-                .to({}, { duration: 0.6 });
+            timeline.fromTo($imageFrame, { clipPath: "inset(70% 4% 0% 4% round 24px 24px 0px 0px)" }, { clipPath: "inset(20% 15% 20% 15% round 24px 24px 24px 24px)" }, "key").fromTo($image, { scale: 1.1 }, { scale: 1 }, "key").fromTo(
+                $imageFrame,
+                { clipPath: "inset(20% 15% 20% 15% round 24px 24px 24px 24px)" },
+                {
+                    clipPath: "inset(0% 0% 0% 0% round 0px 0px 0px 0px)",
+                    immediateRender: false,
+                },
+                "key2",
+            );
+            timeline.eventCallback("onComplete", () => {
+                $pin.addClass("is-expanded");
+                updateQuickNavTheme();
+            });
 
-            const updateExpandedState = () => {
-                $pin.toggleClass("is-expanded", timeline.time() >= timeline.labels.expanded);
+            let started = false;
+            let lastWheelTime = -Infinity;
+            let touchStart = null;
+            let consumingTouch = false;
+            const listeners = new AbortController();
+            const inputOptions = { passive: false, signal: listeners.signal };
+
+            function shrinkImage() {
+                started = false;
+                lastWheelTime = -Infinity;
+                timeline.reverse();
+                $pin.removeClass("is-expanded");
+                updateQuickNavTheme();
+            }
+
+            function beginGesture(event, downward) {
+                if (window.scrollY > 1 || !event.cancelable || event.defaultPrevented) return false;
+                if (!downward) {
+                    if (!started) return false;
+                    event.preventDefault();
+                    shrinkImage();
+                    return true;
+                }
+                if (started) {
+                    if (timeline.progress() < 1) timeline.progress(1).pause();
+                    return false;
+                }
+                event.preventDefault();
+                started = true;
+                timeline.play();
+                return true;
+            }
+
+            function onWheel(event) {
+                if (event.ctrlKey || !event.deltaY || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+                const now = performance.now();
+                // 휠 이벤트에는 종료 신호가 없어 짧은 간격의 관성 입력을 한 동작으로 묶습니다.
+                if (event.deltaY > 0 && now - lastWheelTime < 180 && window.scrollY <= 1) {
+                    if (event.cancelable) event.preventDefault();
+                    lastWheelTime = now;
+                } else if (beginGesture(event, event.deltaY > 0) && event.deltaY > 0) {
+                    lastWheelTime = now;
+                }
+            }
+
+            const pin = $pin.get(0);
+            window.addEventListener("wheel", onWheel, inputOptions);
+            pin.addEventListener(
+                "touchstart",
+                (event) => {
+                    touchStart = event.touches.length === 1 ? event.touches[0] : null;
+                    consumingTouch = false;
+                },
+                { passive: true, signal: listeners.signal },
+            );
+            pin.addEventListener(
+                "touchmove",
+                (event) => {
+                    if (!touchStart || event.touches.length !== 1) return;
+                    if (consumingTouch) {
+                        if (event.cancelable) event.preventDefault();
+                        return;
+                    }
+                    const dy = touchStart.clientY - event.touches[0].clientY;
+                    const dx = touchStart.clientX - event.touches[0].clientX;
+                    if (Math.abs(dy) > Math.abs(dx)) consumingTouch = beginGesture(event, dy > 0);
+                },
+                inputOptions,
+            );
+
+            // 링크 이동·키보드 등 기본 스크롤을 허용하고, 맨 위로 돌아오면 다시 준비합니다.
+            let atTop = true;
+            const syncPagePosition = () => {
+                const nextAtTop = window.scrollY <= 1;
+                if (nextAtTop === atTop) return;
+                atTop = nextAtTop;
+                if (atTop) {
+                    shrinkImage();
+                    return;
+                }
+                started = true;
+                lastWheelTime = -Infinity;
+                timeline.pause().progress(1);
+                $pin.addClass("is-expanded");
                 updateQuickNavTheme();
             };
-            timeline.eventCallback("onUpdate", updateExpandedState);
-            updateExpandedState();
+            window.addEventListener("scroll", syncPagePosition, { passive: true, signal: listeners.signal });
+            syncPagePosition();
 
             return () => {
+                listeners.abort();
                 ScrollTrigger.removeEventListener("refreshInit", updateCopyLayout);
                 $pin.removeClass("has-scroll-animation is-expanded").css({
                     "--visual-copy-top": "",

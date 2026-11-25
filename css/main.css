@@ -638,7 +638,7 @@ End: 섹션8
         padding-top: 48px;
     }
     #sec-02 {
-        overflow: clip;
+        overflow-x: clip;
     }
 
     #sec-06 .card {
